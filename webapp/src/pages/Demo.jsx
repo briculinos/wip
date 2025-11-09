@@ -256,7 +256,7 @@ const Demo = () => {
     return data;
   };
 
-  // Generate frequency domain data after STFT (FFT of windowed signal)
+  // Generate frequency domain data after STFT with standard Gaussian/Hann window
   // Shows some spectral differences but with overlap - hard to classify reliably
   const generateFrequencyData = (leakType) => {
     const data = [];
@@ -309,7 +309,7 @@ const Demo = () => {
   };
 
   // Generate spectrogram data (time-frequency)
-  // NOTE: Hyperlet transform reveals distinct temporal patterns!
+  // NOTE: STFT with Hyperlet window (HLT) - heavy tails give better time-frequency localization
   const generateSpectrogram = (leakType) => {
     const data = [];
     const timeBins = 40;
@@ -571,16 +571,16 @@ const Demo = () => {
               </div>
             )}
 
-            {/* Step 2: Frequency Domain */}
+            {/* Step 2: Standard STFT with Gaussian Window */}
             {pipelineStep >= 2 && (
               <div className="pipeline-step-viz">
                 <h3 className="step-title">
                   <span className="step-number">2</span>
-                  Step 2: STFT - Frequency Domain Conversion
+                  Step 2: Standard STFT with Gaussian/Hann Window
                 </h3>
                 <p className="step-description">
-                  Short-Time Fourier Transform (FFT) converts time-domain signal to frequency domain (512 samples window, 16 step).
-                  Notice: Leak types show some spectral differences but with significant overlap and noise - classification is difficult from frequency alone!
+                  Traditional STFT using Gaussian window (512 samples, 16 step). Shows frequency content but poor time-frequency localization.
+                  Notice: Spectral differences exist but significant overlap makes reliable classification difficult.
                 </p>
                 <ResponsiveContainer width="100%" height={250}>
                   <AreaChart data={frequencyData}>
@@ -601,16 +601,16 @@ const Demo = () => {
               </div>
             )}
 
-            {/* Step 3: Hyperlet Window & Spectrogram */}
+            {/* Step 3: STFT with Hyperlet Window (HLT) */}
             {pipelineStep >= 3 && (
               <div className="pipeline-step-viz">
                 <h3 className="step-title">
                   <span className="step-number">3</span>
-                  Step 3: Hyperlet Transform - Time-Frequency Spectrogram
+                  Step 3: STFT with Hyperlet Window (HLT)
                 </h3>
                 <p className="step-description">
-                  Hyperlet window function (ζ=8.0, n=0.99) applied for superior time-frequency resolution.
-                  Now distinct temporal patterns emerge: bursts (Circumferential), pulses (Longitudinal), continuous (Orifice), diffuse (Gasket), low-energy (No-leak)
+                  Same STFT but using heavy-tailed Hyperlet window (ζ=8.0, n=0.99) for superior time-frequency localization.
+                  Now distinct temporal patterns emerge: bursts (Circumferential), pulses (Longitudinal), continuous (Orifice), diffuse (Gasket), low-energy (No-leak).
                 </p>
                 <div className="spectrogram-viz">
                   <div className="spec-ylabel">Frequency (kHz)</div>
