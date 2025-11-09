@@ -1,0 +1,172 @@
+.comparison {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.comparison-hero {
+  background: white;
+  border-radius: 20px;
+  padding: 3rem 2rem;
+  text-align: center;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+  margin-bottom: 3rem;
+}
+
+.comparison-hero h1 {
+  font-size: 2.5rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 1rem;
+}
+
+.comparison-hero p {
+  font-size: 1.15rem;
+  color: #718096;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.window-visualization,
+.metrics-section,
+.advantages-section,
+.technical-details {
+  background: white;
+  border-radius: 20px;
+  padding: 3rem 2rem;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+  margin-bottom: 3rem;
+}
+
+.chart-description {
+  text-align: center;
+  color: #718096;
+  margin-bottom: 2rem;
+  font-size: 1.05rem;
+}
+
+.chart-container {
+  background: #f7fafc;
+  border-radius: 15px;
+  padding: 2rem;
+}
+
+.metric-tabs {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.metric-tab {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  background: #e2e8f0;
+  color: #4a5568;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.metric-tab:hover {
+  background: #cbd5e0;
+}
+
+.metric-tab.active {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.advantages-grid {
+  display: grid;
+  gap: 2rem;
+}
+
+.advantage-card {
+  display: flex;
+  gap: 1.5rem;
+  padding: 2rem;
+  background: #f7fafc;
+  border-radius: 15px;
+  border-left: 4px solid #667eea;
+  transition: transform 0.3s ease;
+}
+
+.advantage-card:hover {
+  transform: translateX(5px);
+}
+
+.advantage-icon {
+  color: #667eea;
+  flex-shrink: 0;
+}
+
+.advantage-content h3 {
+  font-size: 1.5rem;
+  color: #2d3748;
+  margin-bottom: 0.75rem;
+}
+
+.advantage-content p {
+  color: #718096;
+  line-height: 1.7;
+  margin-bottom: 1rem;
+}
+
+.improvement-badge {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 20px;
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+.code-comparison {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 2rem;
+}
+
+.code-block {
+  background: #1a202c;
+  border-radius: 15px;
+  padding: 1.5rem;
+  overflow-x: auto;
+}
+
+.code-block h3 {
+  color: #667eea;
+  margin-bottom: 1rem;
+  font-size: 1.25rem;
+}
+
+.code-block pre {
+  color: #e2e8f0;
+  font-family: 'Courier New', monospace;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  margin: 0;
+}
+
+@media (max-width: 768px) {
+  .comparison-hero h1 {
+    font-size: 1.75rem;
+  }
+
+  .metric-tabs {
+    flex-direction: column;
+  }
+
+  .code-comparison {
+    grid-template-columns: 1fr;
+  }
+
+  .advantage-card {
+    flex-direction: column;
+  }
+}

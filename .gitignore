@@ -1,0 +1,35 @@
+# Large dataset files
+data/
+*.zip
+
+# Node modules
+node_modules/
+webapp/node_modules/
+
+# Build outputs
+webapp/dist/
+webapp/build/
+
+# Environment variables
+.env
+.env.local
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info/
+dist/
+build/

@@ -1,0 +1,524 @@
+.leak-types {
+  width: 100%;
+}
+
+.leak-types-hero {
+  background: white;
+  border-radius: 20px;
+  padding: 3rem 2rem;
+  text-align: center;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+  margin-bottom: 3rem;
+}
+
+.leak-types-hero h1 {
+  font-size: 2.5rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 1rem;
+}
+
+.leak-types-hero p {
+  font-size: 1.15rem;
+  color: #718096;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.classification-overview {
+  background: white;
+  border-radius: 20px;
+  padding: 3rem 2rem;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+  margin-bottom: 3rem;
+}
+
+.overview-stats {
+  display: flex;
+  justify-content: center;
+  gap: 4rem;
+  flex-wrap: wrap;
+}
+
+.overview-stat {
+  text-align: center;
+}
+
+.stat-number {
+  font-size: 3rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.stat-label {
+  font-size: 1rem;
+  color: #718096;
+  margin-top: 0.5rem;
+}
+
+.leak-types-grid {
+  display: grid;
+  gap: 3rem;
+  margin-bottom: 3rem;
+}
+
+.leak-type-card {
+  background: white;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+  border-top: 6px solid;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.leak-type-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 50px rgba(0, 0, 0, 0.15);
+}
+
+.leak-header {
+  padding: 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  background: #f7fafc;
+}
+
+.leak-title-section {
+  flex: 1;
+}
+
+.leak-name {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #2d3748;
+  margin-bottom: 0.5rem;
+}
+
+.leak-severity {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.severity-icon {
+  width: 20px;
+  height: 20px;
+}
+
+.severity-icon.high {
+  color: #ef4444;
+}
+
+.severity-icon.medium {
+  color: #f59e0b;
+}
+
+.severity-icon.safe {
+  color: #10b981;
+}
+
+.leak-detectability {
+  text-align: right;
+}
+
+.detectability-value {
+  font-size: 2.5rem;
+  font-weight: 700;
+}
+
+.detectability-label {
+  font-size: 0.85rem;
+  color: #718096;
+  margin-top: 0.25rem;
+}
+
+/* Card Body - Side by Side Layout */
+.leak-card-body {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  padding: 2rem;
+}
+
+/* Left Section */
+.leak-left-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.leak-image-container {
+  width: 100%;
+  height: 300px;
+  overflow: hidden;
+  background: #e2e8f0;
+  border-radius: 15px;
+}
+
+.leak-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.leak-type-card:hover .leak-image {
+  transform: scale(1.05);
+}
+
+/* Right Section */
+.leak-right-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.leak-content {
+  padding: 2rem;
+}
+
+.leak-description {
+  font-size: 1.05rem;
+  color: #4a5568;
+  line-height: 1.7;
+  margin-bottom: 1.5rem;
+}
+
+.leak-info-section {
+  margin-bottom: 1.5rem;
+}
+
+.leak-info-section h4 {
+  font-size: 1.25rem;
+  color: #2d3748;
+  margin-bottom: 1rem;
+}
+
+.characteristics-list {
+  list-style: none;
+  padding-left: 0;
+}
+
+.characteristics-list li {
+  padding: 0.5rem 0;
+  padding-left: 1.5rem;
+  position: relative;
+  color: #4a5568;
+}
+
+.characteristics-list li:before {
+  content: "→";
+  position: absolute;
+  left: 0;
+  color: #667eea;
+  font-weight: bold;
+}
+
+/* Acoustic Signature section */
+.leak-frequency {
+  background: #f7fafc;
+  padding: 1.5rem;
+  border-radius: 15px;
+  border: 2px solid #e2e8f0;
+  text-align: center;
+}
+
+.leak-frequency h4 {
+  font-size: 1.25rem;
+  color: #2d3748;
+  margin-bottom: 1rem;
+}
+
+.frequency-badge {
+  display: inline-block;
+  padding: 0.75rem 1.25rem;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+/* Spectrogram Section */
+.spectrogram-section {
+  background: #f7fafc;
+  padding: 1.5rem;
+  border-radius: 15px;
+  border: 2px solid #e2e8f0;
+}
+
+.spectrogram-section h4 {
+  font-size: 1.1rem;
+  color: #2d3748;
+  margin-bottom: 0.5rem;
+}
+
+.spectrogram-desc {
+  font-size: 0.85rem;
+  color: #718096;
+  margin-bottom: 1rem;
+  font-style: italic;
+}
+
+.spectrogram-container {
+  background: white;
+  padding: 1rem;
+  border-radius: 10px;
+}
+
+/* Time-Frequency Heatmap */
+.tf-heatmap-wrapper {
+  background: white;
+  padding: 1rem;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+/* Main container with Y-axis label and grid */
+.tf-main-container {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Y-axis label (vertical) */
+.tf-ylabel {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #4a5568;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* Container for frequency axis and heatmap grid */
+.tf-grid-container {
+  flex: 1;
+  display: flex;
+  gap: 0.5rem;
+  align-items: stretch;
+}
+
+/* Frequency axis labels (left side) */
+.tf-freq-axis {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  font-size: 0.7rem;
+  color: #718096;
+  font-weight: 500;
+  padding: 2px 0;
+  min-width: 20px;
+  text-align: right;
+}
+
+.tf-freq-axis span {
+  line-height: 1;
+}
+
+/* Heatmap grid */
+.tf-heatmap-grid {
+  flex: 1;
+  display: flex;
+  flex-direction: column-reverse;
+  border: 1px solid #cbd5e0;
+  border-radius: 6px;
+  overflow: hidden;
+  min-height: 200px;
+}
+
+.tf-row {
+  display: flex;
+  flex: 1;
+}
+
+.tf-cell {
+  flex: 1;
+  min-height: 3px;
+  min-width: 3px;
+  cursor: pointer;
+  transition: transform 0.1s ease;
+}
+
+.tf-cell:hover {
+  transform: scale(1.5);
+  z-index: 10;
+  border: 1px solid #fff;
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.3);
+}
+
+/* Time axis container */
+.tf-time-axis-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  margin-left: 2.5rem;
+}
+
+/* Time axis labels (bottom) */
+.tf-time-axis {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.7rem;
+  color: #718096;
+  font-weight: 500;
+  padding: 0 0.25rem;
+}
+
+.tf-time-axis span {
+  line-height: 1;
+}
+
+/* X-axis label */
+.tf-xlabel {
+  text-align: center;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #4a5568;
+}
+
+/* Audio Player Section */
+.audio-player-section {
+  display: flex;
+  justify-content: center;
+  padding: 1rem 0;
+}
+
+.audio-player {
+  display: flex;
+  justify-content: center;
+}
+
+.play-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 10px;
+  color: white;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.play-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+}
+
+.play-button:active {
+  transform: translateY(0);
+}
+
+.detection-methodology {
+  background: white;
+  border-radius: 20px;
+  padding: 3rem 2rem;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+}
+
+.methodology-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 2rem;
+}
+
+.methodology-card {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 2rem;
+  border-radius: 15px;
+  color: white;
+  transition: transform 0.3s ease;
+}
+
+.methodology-card:hover {
+  transform: translateY(-5px);
+}
+
+.methodology-card h3 {
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.methodology-card p {
+  line-height: 1.7;
+  opacity: 0.95;
+}
+
+@media (max-width: 1024px) {
+  .leak-card-body {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .leak-types-hero h1 {
+    font-size: 1.75rem;
+  }
+
+  .overview-stats {
+    gap: 2rem;
+  }
+
+  .leak-header {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .leak-detectability {
+    text-align: left;
+  }
+
+  .leak-name {
+    font-size: 1.5rem;
+  }
+
+  .leak-card-body {
+    padding: 1.5rem;
+  }
+
+  .spectrogram-container {
+    padding: 0.5rem;
+  }
+
+  .tf-heatmap-wrapper {
+    padding: 0.5rem;
+  }
+
+  .tf-heatmap-grid {
+    min-height: 150px;
+  }
+
+  .tf-cell {
+    min-height: 2px;
+    min-width: 2px;
+  }
+
+  .tf-time-axis-container {
+    margin-left: 2rem;
+  }
+
+  .tf-freq-axis {
+    font-size: 0.65rem;
+    min-width: 18px;
+  }
+
+  .tf-time-axis {
+    font-size: 0.65rem;
+  }
+}
