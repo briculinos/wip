@@ -258,7 +258,7 @@ const Demo = () => {
   };
 
   // Generate STFT spectrogram with standard Gaussian/Hann window
-  // Poor time-frequency localization - temporal patterns are blurred
+  // Poor time-frequency localization - temporal patterns are heavily blurred and smeared
   const generateStftGaussian = (leakType) => {
     const data = [];
     const timeBins = 40;
@@ -270,29 +270,29 @@ const Demo = () => {
         const freq = (f / freqBins) * 8.0;
         let intensity;
 
-        // Base broadband energy (all types have this)
-        const baseEnergy = Math.exp(-Math.pow((freq - 3.5) / 3.0, 2)) * 40 + Math.random() * 10;
+        // Base broadband energy (all types have this) - higher base noise
+        const baseEnergy = Math.exp(-Math.pow((freq - 3.5) / 3.5, 2)) * 50 + Math.random() * 15;
 
         if (leakType.includes('Circumferential')) {
-          // Bursts are SMEARED - poor temporal resolution with Gaussian window
-          const burstPattern = 1 + 0.3 * Math.sin(time * Math.PI * 4); // Weaker modulation visible
-          const freqBand = Math.exp(-Math.pow((freq - 3.5) / 1.8, 2)) * 45; // Broader frequency spread
+          // Bursts are HEAVILY SMEARED - very poor temporal resolution
+          const burstPattern = 1 + 0.15 * Math.sin(time * Math.PI * 4); // Very weak modulation
+          const freqBand = Math.exp(-Math.pow((freq - 3.5) / 2.5, 2)) * 35; // Very broad frequency
           intensity = baseEnergy + freqBand * burstPattern;
         } else if (leakType.includes('Gasket')) {
-          const drift = 1 + 0.2 * Math.sin(time * Math.PI * 1.5);
-          const freqBand = Math.exp(-Math.pow((freq - 2.5) / 3.0, 2)) * 35; // Very broad
-          intensity = baseEnergy + freqBand * drift + Math.random() * 15;
+          const drift = 1 + 0.1 * Math.sin(time * Math.PI * 1.5);
+          const freqBand = Math.exp(-Math.pow((freq - 2.5) / 3.5, 2)) * 30; // Extremely broad
+          intensity = baseEnergy + freqBand * drift + Math.random() * 20;
         } else if (leakType.includes('No-leak')) {
-          const freqBand = Math.exp(-Math.pow((freq - 1.0) / 2.0, 2)) * 25; // Broader spread
-          intensity = baseEnergy * 0.5 + freqBand + Math.random() * 5;
+          const freqBand = Math.exp(-Math.pow((freq - 1.0) / 2.5, 2)) * 20; // Very broad spread
+          intensity = baseEnergy * 0.6 + freqBand + Math.random() * 8;
         } else if (leakType.includes('Longitudinal')) {
-          // Pulses are BLURRED - hard to see gaps with Gaussian window
-          const pulsePattern = 1.0 + 0.2 * (Math.sin(time * Math.PI * 3) > 0.3 ? 0.4 : -0.2); // Weak contrast
-          const freqBand = Math.exp(-Math.pow((freq - 4.5) / 2.0, 2)) * 40; // Broader
-          intensity = baseEnergy * 0.8 + freqBand * pulsePattern;
+          // Pulses are COMPLETELY BLURRED - gaps barely visible
+          const pulsePattern = 1.0 + 0.1 * (Math.sin(time * Math.PI * 3) > 0.3 ? 0.3 : -0.1); // Minimal contrast
+          const freqBand = Math.exp(-Math.pow((freq - 4.5) / 2.5, 2)) * 35; // Very broad
+          intensity = baseEnergy * 0.9 + freqBand * pulsePattern;
         } else {
-          const stable = 1 + 0.15 * Math.sin(time * Math.PI * 0.8);
-          const freqBand = Math.exp(-Math.pow((freq - 5.5) / 1.8, 2)) * 50; // Broader
+          const stable = 1 + 0.1 * Math.sin(time * Math.PI * 0.8);
+          const freqBand = Math.exp(-Math.pow((freq - 5.5) / 2.2, 2)) * 40; // Broader
           intensity = baseEnergy + freqBand * stable;
         }
 
@@ -308,7 +308,7 @@ const Demo = () => {
   };
 
   // Generate STFT spectrogram with Hyperlet window (HLT)
-  // Superior time-frequency localization - temporal patterns are sharp and clear
+  // Superior time-frequency localization - temporal patterns are VERY sharp and clear
   const generateStftHyperlet = (leakType) => {
     const data = [];
     const timeBins = 40;
@@ -320,36 +320,36 @@ const Demo = () => {
         const freq = (f / freqBins) * 8.0;
         let intensity;
 
-        // Base broadband energy (all types have this)
-        const baseEnergy = Math.exp(-Math.pow((freq - 3.5) / 3.0, 2)) * 40 + Math.random() * 10;
+        // Much lower base energy - HLT has better background suppression
+        const baseEnergy = Math.exp(-Math.pow((freq - 3.5) / 3.0, 2)) * 25 + Math.random() * 5;
 
         if (leakType.includes('Circumferential')) {
-          // Periodic bursts - amplitude modulation at ~2 Hz
-          const burstPattern = 1 + 0.6 * Math.sin(time * Math.PI * 4);
-          // Energy concentrated at mid-high frequencies with temporal bursting
-          const freqBand = Math.exp(-Math.pow((freq - 3.5) / 1.2, 2)) * 45;
+          // SHARP periodic bursts - strong temporal localization
+          const burstPattern = 1 + 0.9 * Math.sin(time * Math.PI * 4); // Very strong modulation
+          // Narrow, concentrated frequency band
+          const freqBand = Math.exp(-Math.pow((freq - 3.5) / 0.8, 2)) * 60;
           intensity = baseEnergy + freqBand * burstPattern;
         } else if (leakType.includes('Gasket')) {
-          // Continuous broadband with slow drift
-          const drift = 1 + 0.3 * Math.sin(time * Math.PI * 1.5);
-          // Broad frequency coverage, less structured
-          const freqBand = Math.exp(-Math.pow((freq - 2.5) / 2.5, 2)) * 35;
-          intensity = baseEnergy + freqBand * drift + Math.random() * 15;
+          // More structured with clear drift
+          const drift = 1 + 0.5 * Math.sin(time * Math.PI * 1.5);
+          // Narrower frequency band
+          const freqBand = Math.exp(-Math.pow((freq - 2.5) / 1.8, 2)) * 45;
+          intensity = baseEnergy + freqBand * drift + Math.random() * 8;
         } else if (leakType.includes('No-leak')) {
-          // Low energy, very smooth, concentrated at low frequencies
-          const freqBand = Math.exp(-Math.pow((freq - 1.0) / 1.5, 2)) * 25;
-          intensity = baseEnergy * 0.5 + freqBand + Math.random() * 5;
+          // Very clean, low energy, tight frequency band
+          const freqBand = Math.exp(-Math.pow((freq - 1.0) / 1.0, 2)) * 30;
+          intensity = baseEnergy * 0.4 + freqBand + Math.random() * 3;
         } else if (leakType.includes('Longitudinal')) {
-          // Sharp pulses - on/off pattern at ~1.5 Hz
-          const pulsePattern = Math.sin(time * Math.PI * 3) > 0.3 ? 1.5 : 0.6;
-          // Energy at higher frequencies with clear temporal gaps
-          const freqBand = Math.exp(-Math.pow((freq - 4.5) / 1.5, 2)) * 40;
-          intensity = baseEnergy * 0.8 + freqBand * pulsePattern;
+          // VERY SHARP pulses with clear on/off
+          const pulsePattern = Math.sin(time * Math.PI * 3) > 0.3 ? 2.0 : 0.3; // Strong contrast
+          // Narrow frequency band with clear temporal gaps
+          const freqBand = Math.exp(-Math.pow((freq - 4.5) / 1.0, 2)) * 55;
+          intensity = baseEnergy * 0.6 + freqBand * pulsePattern;
         } else {
-          // Orifice - continuous high-frequency, very stable
-          const stable = 1 + 0.15 * Math.sin(time * Math.PI * 0.8);
-          // Highest frequency content, minimal temporal variation
-          const freqBand = Math.exp(-Math.pow((freq - 5.5) / 1.3, 2)) * 50;
+          // Orifice - very stable, concentrated high frequency
+          const stable = 1 + 0.2 * Math.sin(time * Math.PI * 0.8);
+          // Narrow, high-frequency band
+          const freqBand = Math.exp(-Math.pow((freq - 5.5) / 0.9, 2)) * 65;
           intensity = baseEnergy + freqBand * stable;
         }
 
@@ -730,7 +730,7 @@ const Demo = () => {
                 </h3>
                 <p className="step-description">
                   Subtracting the Gaussian baseline from HLT reveals what additional information the Hyperlet window provides.
-                  Positive values (bright) show where HLT gives sharper, stronger localization. This highlights the temporal features that enable accurate leak classification.
+                  Dark red regions show where HLT gives sharper, stronger localization. Grey regions show where signals are similar. This highlights the temporal features that enable accurate leak classification.
                 </p>
                 <div className="spectrogram-viz">
                   <div className="spec-ylabel">Frequency (kHz)</div>
@@ -750,16 +750,21 @@ const Demo = () => {
                               const dataPoint = stftDifferenceData.find(d => d.time === t && d.freq === (63 - f));
                               const difference = dataPoint ? dataPoint.intensity : 0;
 
-                              // Use diverging colormap: blue for negative, yellow/green for positive
+                              // Colormap: Dark colors for positive (HLT advantage), grey for negative
                               let color;
                               if (difference > 0) {
-                                // Positive: HLT is stronger - use green/yellow
-                                const intensity = Math.min(Math.abs(difference) / 50, 1);
-                                color = `rgba(16, 185, 129, ${intensity})`; // Green
+                                // Positive: HLT is stronger - use bright, saturated red
+                                const intensity = Math.min(Math.abs(difference) / 15, 1); // More sensitive
+                                const alpha = 0.6 + (intensity * 0.4); // Higher base opacity
+                                color = `rgba(220, 38, 38, ${alpha})`; // Bright red (red-600)
+                              } else if (difference < 0) {
+                                // Negative: Gaussian was stronger - use grey nuances
+                                const intensity = Math.min(Math.abs(difference) / 20, 1);
+                                const greyValue = 200 - (intensity * 80); // 200 to 120 (light to dark grey)
+                                color = `rgb(${greyValue}, ${greyValue}, ${greyValue})`;
                               } else {
-                                // Negative: Gaussian was stronger - use blue
-                                const intensity = Math.min(Math.abs(difference) / 50, 1);
-                                color = `rgba(59, 130, 246, ${intensity})`; // Blue
+                                // Zero difference - white (values are the same)
+                                color = 'rgb(255, 255, 255)';
                               }
 
                               return (
