@@ -257,42 +257,38 @@ const Demo = () => {
   };
 
   // Generate frequency domain data after STFT (in dB)
-  // NOTE: All leak types show similar broad spectra - hard to distinguish!
+  // NOTE: STFT shows the frequency content - should match what's in raw signal!
+  // All leak types have same base frequencies, so STFT looks nearly identical
   const generateFrequencyData = (leakType) => {
     const data = [];
     const freqPoints = 256;
 
     for (let i = 0; i < freqPoints; i++) {
-      const freq = (i / freqPoints) * 8;
-      let linearMag;
+      const freq = (i / freqPoints) * 8; // 0 to 8 kHz
 
-      // All leaks produce broadband noise with overlapping frequency content
-      // The differences are subtle and masked by noise
-      const baseNoise = Math.random() * 0.25;
+      // Base frequency components that exist in ALL signals
+      // These match the sine waves in the raw signal (5, 11.25, 17.5, 23.75 Hz scaled up)
+      const comp1 = Math.exp(-Math.pow((freq - 0.01) / 0.08, 2)) * 0.15;  // ~10 Hz component
+      const comp2 = Math.exp(-Math.pow((freq - 0.15) / 0.15, 2)) * 0.18;  // Low freq
+      const comp3 = Math.exp(-Math.pow((freq - 0.50) / 0.40, 2)) * 0.22;  // Mid-low freq
+      const comp4 = Math.exp(-Math.pow((freq - 1.50) / 0.80, 2)) * 0.25;  // Mid freq
+      const comp5 = Math.exp(-Math.pow((freq - 3.50) / 1.50, 2)) * 0.28;  // Higher freq
 
+      // Broadband turbulent noise floor (extends to high frequencies)
+      const noiseFloor = 0.20 * Math.exp(-freq / 5.0) + Math.random() * 0.15;
+
+      // All signals have same frequency content - only amplitude varies
+      let amplitudeScale = 1.0;
       if (leakType.includes('No-leak')) {
-        // Slightly lower overall energy, but still broadband
-        linearMag = 0.25 + baseNoise +
-                   Math.exp(-Math.pow((freq - 1.5) / 2.5, 2)) * 0.35;
+        amplitudeScale = 0.5; // Lower overall energy
       } else {
-        // All leak types have very similar broadband spectra
-        // Slight variations but highly overlapping
-        const peak1 = Math.exp(-Math.pow((freq - 2.0) / 2.0, 2)) * 0.45;
-        const peak2 = Math.exp(-Math.pow((freq - 4.5) / 2.5, 2)) * 0.40;
-        const peak3 = Math.exp(-Math.pow((freq - 6.5) / 1.8, 2)) * 0.30;
-
-        // Small type-specific bias (but hard to see)
-        let typeBias = 0;
-        if (leakType.includes('Circumferential')) typeBias = peak1 * 0.15;
-        else if (leakType.includes('Gasket')) typeBias = peak2 * 0.12;
-        else if (leakType.includes('Longitudinal')) typeBias = peak2 * 0.10;
-        else typeBias = peak3 * 0.13; // Orifice
-
-        linearMag = 0.35 + baseNoise + peak1 + peak2 + peak3 + typeBias;
+        // All leak types have very similar amplitude (varies by <10%)
+        amplitudeScale = 0.95 + Math.random() * 0.10;
       }
 
+      const linearMag = (comp1 + comp2 + comp3 + comp4 + comp5 + noiseFloor) * amplitudeScale;
+
       // Convert to dB scale (re 1µPa for underwater acoustics)
-      // Typical range for leak detection: -40 to +20 dB re 1µPa
       const magnitudeDb = -40 + (linearMag * 60);
 
       data.push({
