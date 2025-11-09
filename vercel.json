@@ -1,8 +1,4 @@
 {
-  "version": 2,
-  "buildCommand": "cd webapp && npm install && npm run build",
-  "outputDirectory": "webapp/dist",
-  "framework": "vite",
   "rewrites": [
     {
       "source": "/(.*)",
