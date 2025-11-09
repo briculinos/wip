@@ -310,8 +310,8 @@ const LeakTypes = () => {
       <section className="leak-types-hero">
         <h1>Water Pipe Leak Classification</h1>
         <p>
-          Our AI system can identify and distinguish between 5 different leak types
-          using acoustic signature analysis with 95%+ accuracy
+          Our machine learning application powered by the novel Hyperlet algorithm can identify and distinguish between 5 different leak types
+          using acoustic signature analysis with 95%+ accuracy using only one acoustic sensor
         </p>
       </section>
 
