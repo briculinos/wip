@@ -634,7 +634,7 @@ const Demo = () => {
                   Step 3: STFT with Hyperlet Window (HLT)
                 </h3>
                 <p className="step-description">
-                  Same STFT but using heavy-tailed Hyperlet window (ζ=8.0, n=0.99) for superior time-frequency localization.
+                  Same STFT but using heavy-tailed Hyperlet window for superior time-frequency localization.
                   Now distinct temporal patterns emerge: bursts (Circumferential), pulses (Longitudinal), continuous (Orifice), diffuse (Gasket), low-energy (No-leak).
                 </p>
                 <div className="spectrogram-viz">
