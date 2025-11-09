@@ -387,8 +387,7 @@ const LeakTypes = () => {
 
                 {/* Time-Frequency STFT Spectrogram */}
                 <div className="spectrogram-section">
-                  <h4>Time-Frequency Spectrogram (STFT Output)</h4>
-                  <p className="spectrogram-desc">Hyperlet-windowed STFT from Julia processing</p>
+                  <h4>Time-Frequency Response</h4>
                   <TimeFrequencyHeatmap
                     tfData={leak.timeFrequencyData}
                     color={leak.color}
