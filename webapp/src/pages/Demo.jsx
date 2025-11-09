@@ -242,6 +242,7 @@ const Demo = () => {
   };
 
   // Generate frequency domain data after STFT (in dB)
+  // NOTE: All leak types show similar broad spectra - hard to distinguish!
   const generateFrequencyData = (leakType) => {
     const data = [];
     const freqPoints = 256;
@@ -250,21 +251,29 @@ const Demo = () => {
       const freq = (i / freqPoints) * 8;
       let linearMag;
 
-      if (leakType.includes('Circumferential')) {
-        // Peak around 3-4 kHz
-        linearMag = Math.exp(-Math.pow((freq - 3.2) / 0.8, 2)) * 0.8 + Math.random() * 0.1;
-      } else if (leakType.includes('Gasket')) {
-        // Broad peak 1-3 kHz
-        linearMag = Math.exp(-Math.pow((freq - 2.0) / 1.5, 2)) * 0.6 + Math.random() * 0.15;
-      } else if (leakType.includes('No-leak')) {
-        // Low frequency, low amplitude
-        linearMag = Math.exp(-Math.pow((freq - 0.5) / 0.5, 2)) * 0.3 + Math.random() * 0.05;
-      } else if (leakType.includes('Longitudinal')) {
-        // Peak around 4-5 kHz
-        linearMag = Math.exp(-Math.pow((freq - 4.5) / 0.7, 2)) * 0.7 + Math.random() * 0.1;
+      // All leaks produce broadband noise with overlapping frequency content
+      // The differences are subtle and masked by noise
+      const baseNoise = Math.random() * 0.25;
+
+      if (leakType.includes('No-leak')) {
+        // Slightly lower overall energy, but still broadband
+        linearMag = 0.25 + baseNoise +
+                   Math.exp(-Math.pow((freq - 1.5) / 2.5, 2)) * 0.35;
       } else {
-        // Orifice - very high frequency 5-7 kHz
-        linearMag = Math.exp(-Math.pow((freq - 6.0) / 0.9, 2)) * 0.9 + Math.random() * 0.1;
+        // All leak types have very similar broadband spectra
+        // Slight variations but highly overlapping
+        const peak1 = Math.exp(-Math.pow((freq - 2.0) / 2.0, 2)) * 0.45;
+        const peak2 = Math.exp(-Math.pow((freq - 4.5) / 2.5, 2)) * 0.40;
+        const peak3 = Math.exp(-Math.pow((freq - 6.5) / 1.8, 2)) * 0.30;
+
+        // Small type-specific bias (but hard to see)
+        let typeBias = 0;
+        if (leakType.includes('Circumferential')) typeBias = peak1 * 0.15;
+        else if (leakType.includes('Gasket')) typeBias = peak2 * 0.12;
+        else if (leakType.includes('Longitudinal')) typeBias = peak2 * 0.10;
+        else typeBias = peak3 * 0.13; // Orifice
+
+        linearMag = 0.35 + baseNoise + peak1 + peak2 + peak3 + typeBias;
       }
 
       // Convert to dB scale (re 1µPa for underwater acoustics)
@@ -281,6 +290,7 @@ const Demo = () => {
   };
 
   // Generate spectrogram data (time-frequency)
+  // NOTE: Hyperlet transform reveals distinct temporal patterns!
   const generateSpectrogram = (leakType) => {
     const data = [];
     const timeBins = 40;
@@ -292,18 +302,37 @@ const Demo = () => {
         const freq = (f / freqBins) * 8.0;
         let intensity;
 
+        // Base broadband energy (all types have this)
+        const baseEnergy = Math.exp(-Math.pow((freq - 3.5) / 3.0, 2)) * 40 + Math.random() * 10;
+
         if (leakType.includes('Circumferential')) {
-          const timeMod = 1 + 0.2 * Math.sin(time * Math.PI * 4);
-          intensity = Math.exp(-Math.pow((freq - 3.2) / 0.8, 2)) * 80 * timeMod + Math.random() * 8;
+          // Periodic bursts - amplitude modulation at ~2 Hz
+          const burstPattern = 1 + 0.6 * Math.sin(time * Math.PI * 4);
+          // Energy concentrated at mid-high frequencies with temporal bursting
+          const freqBand = Math.exp(-Math.pow((freq - 3.5) / 1.2, 2)) * 45;
+          intensity = baseEnergy + freqBand * burstPattern;
         } else if (leakType.includes('Gasket')) {
-          intensity = Math.exp(-Math.pow((freq - 2.0) / 1.5, 2)) * 60 + Math.random() * 12;
+          // Continuous broadband with slow drift
+          const drift = 1 + 0.3 * Math.sin(time * Math.PI * 1.5);
+          // Broad frequency coverage, less structured
+          const freqBand = Math.exp(-Math.pow((freq - 2.5) / 2.5, 2)) * 35;
+          intensity = baseEnergy + freqBand * drift + Math.random() * 15;
         } else if (leakType.includes('No-leak')) {
-          intensity = Math.exp(-Math.pow((freq - 0.5) / 0.5, 2)) * 30 + Math.random() * 5;
+          // Low energy, very smooth, concentrated at low frequencies
+          const freqBand = Math.exp(-Math.pow((freq - 1.0) / 1.5, 2)) * 25;
+          intensity = baseEnergy * 0.5 + freqBand + Math.random() * 5;
         } else if (leakType.includes('Longitudinal')) {
-          const pulse = Math.sin(time * Math.PI * 3) > 0.5 ? 1.3 : 0.8;
-          intensity = Math.exp(-Math.pow((freq - 4.5) / 0.7, 2)) * 70 * pulse + Math.random() * 10;
+          // Sharp pulses - on/off pattern at ~1.5 Hz
+          const pulsePattern = Math.sin(time * Math.PI * 3) > 0.3 ? 1.5 : 0.6;
+          // Energy at higher frequencies with clear temporal gaps
+          const freqBand = Math.exp(-Math.pow((freq - 4.5) / 1.5, 2)) * 40;
+          intensity = baseEnergy * 0.8 + freqBand * pulsePattern;
         } else {
-          intensity = Math.exp(-Math.pow((freq - 6.0) / 0.9, 2)) * 90 + Math.random() * 10;
+          // Orifice - continuous high-frequency, very stable
+          const stable = 1 + 0.15 * Math.sin(time * Math.PI * 0.8);
+          // Highest frequency content, minimal temporal variation
+          const freqBand = Math.exp(-Math.pow((freq - 5.5) / 1.3, 2)) * 50;
+          intensity = baseEnergy + freqBand * stable;
         }
 
         data.push({
@@ -530,7 +559,8 @@ const Demo = () => {
                   Step 2: STFT - Frequency Domain Conversion
                 </h3>
                 <p className="step-description">
-                  Short-Time Fourier Transform converts time-domain signal to frequency domain (512 samples window, 16 step)
+                  Short-Time Fourier Transform converts time-domain signal to frequency domain (512 samples window, 16 step).
+                  Notice: All leak types show similar broadband spectra - difficult to distinguish without time-frequency analysis!
                 </p>
                 <ResponsiveContainer width="100%" height={250}>
                   <AreaChart data={frequencyData}>
@@ -559,7 +589,8 @@ const Demo = () => {
                   Step 3: Hyperlet Transform - Time-Frequency Spectrogram
                 </h3>
                 <p className="step-description">
-                  Hyperlet window function (ζ=8.0, n=0.99) applied for superior time-frequency resolution
+                  Hyperlet window function (ζ=8.0, n=0.99) applied for superior time-frequency resolution.
+                  Now distinct temporal patterns emerge: bursts (Circumferential), pulses (Longitudinal), continuous (Orifice), diffuse (Gasket), low-energy (No-leak)
                 </p>
                 <div className="spectrogram-viz">
                   <div className="spec-ylabel">Frequency (kHz)</div>
