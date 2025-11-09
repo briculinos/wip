@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { PlayCircle, Download, CheckCircle, Loader } from 'lucide-react';
-import { LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import './Demo.css';
 
 const Demo = () => {
@@ -11,8 +11,8 @@ const Demo = () => {
   // Pipeline visualization states
   const [pipelineStep, setPipelineStep] = useState(0);
   const [rawWaveform, setRawWaveform] = useState([]);
-  const [frequencyData, setFrequencyData] = useState([]);
-  const [spectrogramData, setSpectrogramData] = useState([]);
+  const [stftGaussianData, setStftGaussianData] = useState([]);
+  const [stftHyperletData, setStftHyperletData] = useState([]);
   const [windowPosition, setWindowPosition] = useState(0);
   const [showPipeline, setShowPipeline] = useState(false);
 
@@ -256,61 +256,59 @@ const Demo = () => {
     return data;
   };
 
-  // Generate frequency domain data after STFT with standard Gaussian/Hann window
-  // Shows some spectral differences but with overlap - hard to classify reliably
-  const generateFrequencyData = (leakType) => {
+  // Generate STFT spectrogram with standard Gaussian/Hann window
+  // Poor time-frequency localization - temporal patterns are blurred
+  const generateStftGaussian = (leakType) => {
     const data = [];
-    const freqPoints = 256;
+    const timeBins = 40;
+    const freqBins = 64;
 
-    for (let i = 0; i < freqPoints; i++) {
-      const freq = (i / freqPoints) * 8; // 0 to 8 kHz
+    for (let t = 0; t < timeBins; t++) {
+      for (let f = 0; f < freqBins; f++) {
+        const time = t / timeBins * 2.0;
+        const freq = (f / freqBins) * 8.0;
+        let intensity;
 
-      // All leak types have broadband turbulent noise base
-      const broadbandNoise = 0.20 * Math.exp(-freq / 4.0) + Math.random() * 0.12;
+        // Base broadband energy (all types have this)
+        const baseEnergy = Math.exp(-Math.pow((freq - 3.5) / 3.0, 2)) * 40 + Math.random() * 10;
 
-      let linearMag;
+        if (leakType.includes('Circumferential')) {
+          // Bursts are SMEARED - poor temporal resolution with Gaussian window
+          const burstPattern = 1 + 0.3 * Math.sin(time * Math.PI * 4); // Weaker modulation visible
+          const freqBand = Math.exp(-Math.pow((freq - 3.5) / 1.8, 2)) * 45; // Broader frequency spread
+          intensity = baseEnergy + freqBand * burstPattern;
+        } else if (leakType.includes('Gasket')) {
+          const drift = 1 + 0.2 * Math.sin(time * Math.PI * 1.5);
+          const freqBand = Math.exp(-Math.pow((freq - 2.5) / 3.0, 2)) * 35; // Very broad
+          intensity = baseEnergy + freqBand * drift + Math.random() * 15;
+        } else if (leakType.includes('No-leak')) {
+          const freqBand = Math.exp(-Math.pow((freq - 1.0) / 2.0, 2)) * 25; // Broader spread
+          intensity = baseEnergy * 0.5 + freqBand + Math.random() * 5;
+        } else if (leakType.includes('Longitudinal')) {
+          // Pulses are BLURRED - hard to see gaps with Gaussian window
+          const pulsePattern = 1.0 + 0.2 * (Math.sin(time * Math.PI * 3) > 0.3 ? 0.4 : -0.2); // Weak contrast
+          const freqBand = Math.exp(-Math.pow((freq - 4.5) / 2.0, 2)) * 40; // Broader
+          intensity = baseEnergy * 0.8 + freqBand * pulsePattern;
+        } else {
+          const stable = 1 + 0.15 * Math.sin(time * Math.PI * 0.8);
+          const freqBand = Math.exp(-Math.pow((freq - 5.5) / 1.8, 2)) * 50; // Broader
+          intensity = baseEnergy + freqBand * stable;
+        }
 
-      if (leakType.includes('No-leak')) {
-        // Lower energy, concentrated at low frequencies
-        const lowFreq = Math.exp(-Math.pow((freq - 0.8) / 1.2, 2)) * 0.35;
-        linearMag = broadbandNoise * 0.6 + lowFreq;
-      } else if (leakType.includes('Circumferential')) {
-        // Moderate energy across 2-5 kHz with some sidebands
-        const peak = Math.exp(-Math.pow((freq - 3.2) / 1.5, 2)) * 0.50;
-        const sidebands = Math.exp(-Math.pow((freq - 2.0) / 0.8, 2)) * 0.25;
-        linearMag = broadbandNoise + peak + sidebands;
-      } else if (leakType.includes('Gasket')) {
-        // Broad spectrum 1-4 kHz, less structured
-        const broad1 = Math.exp(-Math.pow((freq - 1.8) / 1.8, 2)) * 0.42;
-        const broad2 = Math.exp(-Math.pow((freq - 3.5) / 1.2, 2)) * 0.38;
-        linearMag = broadbandNoise * 1.2 + broad1 + broad2;
-      } else if (leakType.includes('Longitudinal')) {
-        // Energy at 3-6 kHz with harmonics
-        const peak = Math.exp(-Math.pow((freq - 4.2) / 1.3, 2)) * 0.48;
-        const harmonic = Math.exp(-Math.pow((freq - 2.8) / 0.9, 2)) * 0.28;
-        linearMag = broadbandNoise + peak + harmonic;
-      } else {
-        // Orifice - highest frequencies 5-7 kHz
-        const highPeak = Math.exp(-Math.pow((freq - 5.8) / 1.4, 2)) * 0.52;
-        const midPeak = Math.exp(-Math.pow((freq - 3.5) / 1.0, 2)) * 0.30;
-        linearMag = broadbandNoise + highPeak + midPeak;
+        data.push({
+          time: t,
+          freq: f,
+          intensity: Math.max(0, Math.min(100, intensity))
+        });
       }
-
-      // Convert to dB scale (re 1µPa)
-      const magnitudeDb = -40 + (linearMag * 60);
-
-      data.push({
-        frequency: freq.toFixed(2),
-        magnitude: magnitudeDb.toFixed(1)
-      });
     }
 
     return data;
   };
 
-  // Generate spectrogram data (time-frequency)
-  // NOTE: STFT with Hyperlet window (HLT) - heavy tails give better time-frequency localization
-  const generateSpectrogram = (leakType) => {
+  // Generate STFT spectrogram with Hyperlet window (HLT)
+  // Superior time-frequency localization - temporal patterns are sharp and clear
+  const generateStftHyperlet = (leakType) => {
     const data = [];
     const timeBins = 40;
     const freqBins = 64;
@@ -407,15 +405,15 @@ const Demo = () => {
       setPipelineStep(1);
     }, 500);
 
-    // Step 2: Show STFT conversion to frequency domain
+    // Step 2: Show STFT with Gaussian window (blurred spectrogram)
     setTimeout(() => {
-      setFrequencyData(generateFrequencyData(selectedSample.type));
+      setStftGaussianData(generateStftGaussian(selectedSample.type));
       setPipelineStep(2);
     }, 2000);
 
-    // Step 3: Apply Hyperlet window and show spectrogram
+    // Step 3: Show STFT with Hyperlet window (sharp spectrogram)
     setTimeout(() => {
-      setSpectrogramData(generateSpectrogram(selectedSample.type));
+      setStftHyperletData(generateStftHyperlet(selectedSample.type));
       setPipelineStep(3);
     }, 3500);
 
@@ -576,28 +574,55 @@ const Demo = () => {
               <div className="pipeline-step-viz">
                 <h3 className="step-title">
                   <span className="step-number">2</span>
-                  Step 2: Standard STFT with Gaussian/Hann Window
+                  Step 2: STFT with Gaussian/Hann Window (Baseline)
                 </h3>
                 <p className="step-description">
-                  Traditional STFT using Gaussian window (512 samples, 16 step). Shows frequency content but poor time-frequency localization.
-                  Notice: Spectral differences exist but significant overlap makes reliable classification difficult.
+                  Traditional STFT using Gaussian window (512 samples, 16 step). Poor time-frequency localization - temporal patterns are blurred and smeared.
+                  Notice: Burst and pulse patterns are barely visible due to window spreading.
                 </p>
-                <ResponsiveContainer width="100%" height={250}>
-                  <AreaChart data={frequencyData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                    <XAxis
-                      dataKey="frequency"
-                      label={{ value: 'Frequency (kHz)', position: 'insideBottom', offset: -5 }}
-                      stroke="#718096"
-                    />
-                    <YAxis
-                      label={{ value: 'Magnitude (dB re 1µPa)', angle: -90, position: 'insideLeft' }}
-                      stroke="#718096"
-                    />
-                    <Tooltip />
-                    <Area type="monotone" dataKey="magnitude" stroke="#8b5cf6" fill="#8b5cf6" fillOpacity={0.6} />
-                  </AreaChart>
-                </ResponsiveContainer>
+                <div className="spectrogram-viz">
+                  <div className="spec-ylabel">Frequency (kHz)</div>
+                  <div className="spec-main">
+                    <div className="spec-grid-container">
+                      <div className="spec-yaxis">
+                        <span>8</span>
+                        <span>6</span>
+                        <span>4</span>
+                        <span>2</span>
+                        <span>0</span>
+                      </div>
+                      <div className="spec-grid">
+                        {Array.from({ length: 64 }, (_, f) => (
+                          <div key={f} className="spec-row">
+                            {Array.from({ length: 40 }, (_, t) => {
+                              const dataPoint = stftGaussianData.find(d => d.time === t && d.freq === (63 - f));
+                              const intensity = dataPoint ? dataPoint.intensity : 0;
+                              const color = `rgba(139, 92, 246, ${intensity / 100})`; // Purple for Gaussian
+
+                              return (
+                                <div
+                                  key={t}
+                                  className="spec-cell"
+                                  style={{ backgroundColor: color }}
+                                />
+                              );
+                            })}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="spec-xaxis-container">
+                      <div className="spec-xaxis">
+                        <span>0.0</span>
+                        <span>0.5</span>
+                        <span>1.0</span>
+                        <span>1.5</span>
+                        <span>2.0</span>
+                      </div>
+                      <div className="spec-xlabel">Time (seconds)</div>
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
 
@@ -627,9 +652,9 @@ const Demo = () => {
                         {Array.from({ length: 64 }, (_, f) => (
                           <div key={f} className="spec-row">
                             {Array.from({ length: 40 }, (_, t) => {
-                              const dataPoint = spectrogramData.find(d => d.time === t && d.freq === (63 - f));
+                              const dataPoint = stftHyperletData.find(d => d.time === t && d.freq === (63 - f));
                               const intensity = dataPoint ? dataPoint.intensity : 0;
-                              const color = `rgba(239, 68, 68, ${intensity / 100})`;
+                              const color = `rgba(239, 68, 68, ${intensity / 100})`; // Red for Hyperlet
 
                               return (
                                 <div
@@ -683,7 +708,7 @@ const Demo = () => {
                         {Array.from({ length: 64 }, (_, f) => (
                           <div key={f} className="spec-row">
                             {Array.from({ length: 40 }, (_, t) => {
-                              const dataPoint = spectrogramData.find(d => d.time === t && d.freq === (63 - f));
+                              const dataPoint = stftHyperletData.find(d => d.time === t && d.freq === (63 - f));
                               const intensity = dataPoint ? dataPoint.intensity : 0;
                               const color = `rgba(239, 68, 68, ${intensity / 100})`;
 
