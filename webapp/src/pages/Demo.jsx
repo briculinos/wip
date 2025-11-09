@@ -13,6 +13,7 @@ const Demo = () => {
   const [rawWaveform, setRawWaveform] = useState([]);
   const [stftGaussianData, setStftGaussianData] = useState([]);
   const [stftHyperletData, setStftHyperletData] = useState([]);
+  const [stftDifferenceData, setStftDifferenceData] = useState([]);
   const [windowPosition, setWindowPosition] = useState(0);
   const [showPipeline, setShowPipeline] = useState(false);
 
@@ -363,16 +364,44 @@ const Demo = () => {
     return data;
   };
 
+  // Compute difference between HLT and Gaussian spectrograms
+  const computeStftDifference = (hyperletData, gaussianData) => {
+    const data = [];
+    const timeBins = 40;
+    const freqBins = 64;
+
+    for (let t = 0; t < timeBins; t++) {
+      for (let f = 0; f < freqBins; f++) {
+        const hyperletPoint = hyperletData.find(d => d.time === t && d.freq === f);
+        const gaussianPoint = gaussianData.find(d => d.time === t && d.freq === f);
+
+        const hyperletIntensity = hyperletPoint ? hyperletPoint.intensity : 0;
+        const gaussianIntensity = gaussianPoint ? gaussianPoint.intensity : 0;
+
+        // Difference: what HLT reveals that Gaussian doesn't
+        const difference = hyperletIntensity - gaussianIntensity;
+
+        data.push({
+          time: t,
+          freq: f,
+          intensity: difference // Can be positive or negative
+        });
+      }
+    }
+
+    return data;
+  };
+
   // Animate sliding window
   useEffect(() => {
-    if (pipelineStep === 4 && windowPosition < 39) {
+    if (pipelineStep === 5 && windowPosition < 39) {
       animationRef.current = setTimeout(() => {
         setWindowPosition(prev => prev + 1);
       }, 150);
-    } else if (pipelineStep === 4 && windowPosition >= 39 && selectedSample) {
+    } else if (pipelineStep === 5 && windowPosition >= 39 && selectedSample) {
       // Move to final results after animation completes
       setTimeout(() => {
-        setPipelineStep(5);
+        setPipelineStep(6);
         setResult({
           ...selectedSample.expectedResult,
           processingTime: '1.2s',
@@ -413,15 +442,24 @@ const Demo = () => {
 
     // Step 3: Show STFT with Hyperlet window (sharp spectrogram)
     setTimeout(() => {
-      setStftHyperletData(generateStftHyperlet(selectedSample.type));
+      const hyperletData = generateStftHyperlet(selectedSample.type);
+      setStftHyperletData(hyperletData);
       setPipelineStep(3);
+
+      // Step 4: Compute and show difference after both spectrograms are ready
+      setTimeout(() => {
+        const gaussianData = generateStftGaussian(selectedSample.type);
+        const differenceData = computeStftDifference(hyperletData, gaussianData);
+        setStftDifferenceData(differenceData);
+        setPipelineStep(4);
+      }, 1500);
     }, 3500);
 
-    // Step 4: Start CNN sliding window animation
+    // Step 5: Start CNN sliding window animation
     setTimeout(() => {
-      setPipelineStep(4);
+      setPipelineStep(5);
       setWindowPosition(0);
-    }, 5000);
+    }, 6500);
   };
 
   const getConfidenceColor = (confidence) => {
@@ -683,12 +721,80 @@ const Demo = () => {
               </div>
             )}
 
-            {/* Step 4: CNN Sliding Window */}
+            {/* Step 4: Difference between HLT and Gaussian */}
             {pipelineStep >= 4 && (
               <div className="pipeline-step-viz">
                 <h3 className="step-title">
                   <span className="step-number">4</span>
-                  Step 4: CNN Analysis - Sliding Window Detection
+                  Step 4: Difference (HLT - Gaussian Baseline)
+                </h3>
+                <p className="step-description">
+                  Subtracting the Gaussian baseline from HLT reveals what additional information the Hyperlet window provides.
+                  Positive values (bright) show where HLT gives sharper, stronger localization. This highlights the temporal features that enable accurate leak classification.
+                </p>
+                <div className="spectrogram-viz">
+                  <div className="spec-ylabel">Frequency (kHz)</div>
+                  <div className="spec-main">
+                    <div className="spec-grid-container">
+                      <div className="spec-yaxis">
+                        <span>8</span>
+                        <span>6</span>
+                        <span>4</span>
+                        <span>2</span>
+                        <span>0</span>
+                      </div>
+                      <div className="spec-grid">
+                        {Array.from({ length: 64 }, (_, f) => (
+                          <div key={f} className="spec-row">
+                            {Array.from({ length: 40 }, (_, t) => {
+                              const dataPoint = stftDifferenceData.find(d => d.time === t && d.freq === (63 - f));
+                              const difference = dataPoint ? dataPoint.intensity : 0;
+
+                              // Use diverging colormap: blue for negative, yellow/green for positive
+                              let color;
+                              if (difference > 0) {
+                                // Positive: HLT is stronger - use green/yellow
+                                const intensity = Math.min(Math.abs(difference) / 50, 1);
+                                color = `rgba(16, 185, 129, ${intensity})`; // Green
+                              } else {
+                                // Negative: Gaussian was stronger - use blue
+                                const intensity = Math.min(Math.abs(difference) / 50, 1);
+                                color = `rgba(59, 130, 246, ${intensity})`; // Blue
+                              }
+
+                              return (
+                                <div
+                                  key={t}
+                                  className="spec-cell"
+                                  style={{ backgroundColor: color }}
+                                />
+                              );
+                            })}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="spec-xaxis-container">
+                      <div className="spec-xaxis">
+                        <span>0.0</span>
+                        <span>0.5</span>
+                        <span>1.0</span>
+                        <span>1.5</span>
+                        <span>2.0</span>
+                      </div>
+                      <div className="spec-xlabel">Time (seconds)</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Step 5: CNN Sliding Window */}
+            {pipelineStep >= 5 && (
+              <div className="pipeline-step-viz">
+                <h3 className="step-title">
+                  <span className="step-number">5</span>
+                  Step 5: CNN Analysis - Sliding Window Detection
                 </h3>
                 <p className="step-description">
                   Deep learning CNN with Temporal Blocking analyzes spectrogram patterns using a sliding window approach
