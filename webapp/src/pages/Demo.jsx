@@ -200,7 +200,7 @@ const Demo = () => {
   };
 
   // Generate raw waveform data (simulated acoustic signal)
-  // NOTE: All leak types produce broadband noise - differences are subtle in time domain
+  // Each leak type has different dominant frequencies + temporal modulation
   const generateRawWaveform = (leakType) => {
     const data = [];
     const samples = 400;
@@ -208,43 +208,43 @@ const Demo = () => {
     for (let i = 0; i < samples; i++) {
       const t = i / samples;
 
-      // All signals are composed of multiple frequency components (broadband)
-      // Creating realistic turbulent flow acoustic signature
-      const freq1 = Math.sin(t * Math.PI * 20) * 0.25;
-      const freq2 = Math.sin(t * Math.PI * 45) * 0.20;
-      const freq3 = Math.sin(t * Math.PI * 70) * 0.15;
-      const freq4 = Math.sin(t * Math.PI * 95) * 0.10;
+      // Common broadband turbulent noise base (all signals have this)
+      const lowFreq = Math.sin(t * Math.PI * 15) * 0.15;
+      const noise = (Math.random() - 0.5) * 0.35;
 
-      // High frequency noise component (turbulence)
-      const noise = (Math.random() - 0.5) * 0.4;
+      let amplitude = lowFreq + noise;
+      let typeSpecific = 0;
 
-      let amplitude = freq1 + freq2 + freq3 + freq4 + noise;
-
-      // Subtle amplitude modulation creates temporal structure
-      // (not visible in raw signal, but revealed in spectrogram)
-      let modulation = 1.0;
-
-      if (leakType.includes('Circumferential')) {
-        // Very subtle periodic modulation (~2 Hz)
-        modulation = 1.0 + 0.15 * Math.sin(t * Math.PI * 4);
+      if (leakType.includes('No-leak')) {
+        // Low amplitude, mostly low frequencies
+        typeSpecific = Math.sin(t * Math.PI * 8) * 0.20;
+        amplitude = (amplitude + typeSpecific) * 0.5;
+      } else if (leakType.includes('Circumferential')) {
+        // Mid frequencies (3 kHz range) with periodic bursts
+        const carrier = Math.sin(t * Math.PI * 50) * 0.25;
+        const modulation = 1.0 + 0.4 * Math.sin(t * Math.PI * 4); // 2 Hz bursting
+        typeSpecific = carrier * modulation;
+        amplitude = amplitude + typeSpecific;
       } else if (leakType.includes('Gasket')) {
-        // Slight slow drift
-        modulation = 1.0 + 0.10 * Math.sin(t * Math.PI * 1.5);
-      } else if (leakType.includes('No-leak')) {
-        // Lower overall amplitude
-        modulation = 0.5;
+        // Broad frequency mix, less structured
+        typeSpecific = Math.sin(t * Math.PI * 35) * 0.22 +
+                      Math.sin(t * Math.PI * 65) * 0.18;
+        amplitude = amplitude * 1.3 + typeSpecific;
       } else if (leakType.includes('Longitudinal')) {
-        // Very subtle pulsing (hard to see in raw signal)
-        modulation = 1.0 + 0.12 * (Math.sin(t * Math.PI * 3) > 0.3 ? 0.3 : -0.2);
+        // Higher frequencies (4 kHz) with pulsing
+        const carrier = Math.sin(t * Math.PI * 70) * 0.28;
+        const pulse = Math.sin(t * Math.PI * 3) > 0.3 ? 1.4 : 0.6; // Pulsing pattern
+        typeSpecific = carrier * pulse;
+        amplitude = amplitude * 0.9 + typeSpecific;
       } else {
-        // Orifice - very stable
-        modulation = 1.05;
+        // Orifice - highest frequencies (6 kHz), very continuous
+        typeSpecific = Math.sin(t * Math.PI * 95) * 0.30 +
+                      Math.sin(t * Math.PI * 55) * 0.20;
+        amplitude = amplitude + typeSpecific;
       }
 
-      amplitude = amplitude * modulation;
-
       // Scale to realistic pressure values (Pascals)
-      const scaleFactor = leakType.includes('No-leak') ? 0.01 : 0.2;
+      const scaleFactor = 0.2;
       const scaledAmplitude = amplitude * scaleFactor;
 
       data.push({
@@ -256,9 +256,8 @@ const Demo = () => {
     return data;
   };
 
-  // Generate frequency domain data after STFT (in dB)
-  // NOTE: STFT shows the frequency content - should match what's in raw signal!
-  // All leak types have same base frequencies, so STFT looks nearly identical
+  // Generate frequency domain data after STFT (FFT of windowed signal)
+  // Shows some spectral differences but with overlap - hard to classify reliably
   const generateFrequencyData = (leakType) => {
     const data = [];
     const freqPoints = 256;
@@ -266,29 +265,38 @@ const Demo = () => {
     for (let i = 0; i < freqPoints; i++) {
       const freq = (i / freqPoints) * 8; // 0 to 8 kHz
 
-      // Base frequency components that exist in ALL signals
-      // These match the sine waves in the raw signal (5, 11.25, 17.5, 23.75 Hz scaled up)
-      const comp1 = Math.exp(-Math.pow((freq - 0.01) / 0.08, 2)) * 0.15;  // ~10 Hz component
-      const comp2 = Math.exp(-Math.pow((freq - 0.15) / 0.15, 2)) * 0.18;  // Low freq
-      const comp3 = Math.exp(-Math.pow((freq - 0.50) / 0.40, 2)) * 0.22;  // Mid-low freq
-      const comp4 = Math.exp(-Math.pow((freq - 1.50) / 0.80, 2)) * 0.25;  // Mid freq
-      const comp5 = Math.exp(-Math.pow((freq - 3.50) / 1.50, 2)) * 0.28;  // Higher freq
+      // All leak types have broadband turbulent noise base
+      const broadbandNoise = 0.20 * Math.exp(-freq / 4.0) + Math.random() * 0.12;
 
-      // Broadband turbulent noise floor (extends to high frequencies)
-      const noiseFloor = 0.20 * Math.exp(-freq / 5.0) + Math.random() * 0.15;
+      let linearMag;
 
-      // All signals have same frequency content - only amplitude varies
-      let amplitudeScale = 1.0;
       if (leakType.includes('No-leak')) {
-        amplitudeScale = 0.5; // Lower overall energy
+        // Lower energy, concentrated at low frequencies
+        const lowFreq = Math.exp(-Math.pow((freq - 0.8) / 1.2, 2)) * 0.35;
+        linearMag = broadbandNoise * 0.6 + lowFreq;
+      } else if (leakType.includes('Circumferential')) {
+        // Moderate energy across 2-5 kHz with some sidebands
+        const peak = Math.exp(-Math.pow((freq - 3.2) / 1.5, 2)) * 0.50;
+        const sidebands = Math.exp(-Math.pow((freq - 2.0) / 0.8, 2)) * 0.25;
+        linearMag = broadbandNoise + peak + sidebands;
+      } else if (leakType.includes('Gasket')) {
+        // Broad spectrum 1-4 kHz, less structured
+        const broad1 = Math.exp(-Math.pow((freq - 1.8) / 1.8, 2)) * 0.42;
+        const broad2 = Math.exp(-Math.pow((freq - 3.5) / 1.2, 2)) * 0.38;
+        linearMag = broadbandNoise * 1.2 + broad1 + broad2;
+      } else if (leakType.includes('Longitudinal')) {
+        // Energy at 3-6 kHz with harmonics
+        const peak = Math.exp(-Math.pow((freq - 4.2) / 1.3, 2)) * 0.48;
+        const harmonic = Math.exp(-Math.pow((freq - 2.8) / 0.9, 2)) * 0.28;
+        linearMag = broadbandNoise + peak + harmonic;
       } else {
-        // All leak types have very similar amplitude (varies by <10%)
-        amplitudeScale = 0.95 + Math.random() * 0.10;
+        // Orifice - highest frequencies 5-7 kHz
+        const highPeak = Math.exp(-Math.pow((freq - 5.8) / 1.4, 2)) * 0.52;
+        const midPeak = Math.exp(-Math.pow((freq - 3.5) / 1.0, 2)) * 0.30;
+        linearMag = broadbandNoise + highPeak + midPeak;
       }
 
-      const linearMag = (comp1 + comp2 + comp3 + comp4 + comp5 + noiseFloor) * amplitudeScale;
-
-      // Convert to dB scale (re 1µPa for underwater acoustics)
+      // Convert to dB scale (re 1µPa)
       const magnitudeDb = -40 + (linearMag * 60);
 
       data.push({
@@ -542,7 +550,7 @@ const Demo = () => {
                 </h3>
                 <p className="step-description">
                   Hydrophone sensor captures acoustic signals from water pipes at 8000 Hz sampling rate.
-                  All leak types produce complex broadband turbulent noise - very difficult to distinguish by eye in time domain.
+                  Signals appear as complex noisy waveforms - temporal patterns are difficult to identify by visual inspection.
                 </p>
                 <ResponsiveContainer width="100%" height={250}>
                   <LineChart data={rawWaveform}>
@@ -571,8 +579,8 @@ const Demo = () => {
                   Step 2: STFT - Frequency Domain Conversion
                 </h3>
                 <p className="step-description">
-                  Short-Time Fourier Transform converts time-domain signal to frequency domain (512 samples window, 16 step).
-                  Notice: All leak types show similar broadband spectra - difficult to distinguish without time-frequency analysis!
+                  Short-Time Fourier Transform (FFT) converts time-domain signal to frequency domain (512 samples window, 16 step).
+                  Notice: Leak types show some spectral differences but with significant overlap and noise - classification is difficult from frequency alone!
                 </p>
                 <ResponsiveContainer width="100%" height={250}>
                   <AreaChart data={frequencyData}>
