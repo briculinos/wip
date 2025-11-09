@@ -200,37 +200,52 @@ const Demo = () => {
   };
 
   // Generate raw waveform data (simulated acoustic signal)
+  // NOTE: All leak types produce broadband noise - differences are subtle in time domain
   const generateRawWaveform = (leakType) => {
     const data = [];
     const samples = 400;
 
     for (let i = 0; i < samples; i++) {
       const t = i / samples;
-      let amplitude;
+
+      // All signals are composed of multiple frequency components (broadband)
+      // Creating realistic turbulent flow acoustic signature
+      const freq1 = Math.sin(t * Math.PI * 20) * 0.25;
+      const freq2 = Math.sin(t * Math.PI * 45) * 0.20;
+      const freq3 = Math.sin(t * Math.PI * 70) * 0.15;
+      const freq4 = Math.sin(t * Math.PI * 95) * 0.10;
+
+      // High frequency noise component (turbulence)
+      const noise = (Math.random() - 0.5) * 0.4;
+
+      let amplitude = freq1 + freq2 + freq3 + freq4 + noise;
+
+      // Subtle amplitude modulation creates temporal structure
+      // (not visible in raw signal, but revealed in spectrogram)
+      let modulation = 1.0;
 
       if (leakType.includes('Circumferential')) {
-        // High frequency oscillations with periodic bursts
-        amplitude = Math.sin(t * Math.PI * 30) * 0.5 +
-                   Math.sin(t * Math.PI * 60) * 0.3 * (1 + 0.3 * Math.sin(t * Math.PI * 4));
+        // Very subtle periodic modulation (~2 Hz)
+        modulation = 1.0 + 0.15 * Math.sin(t * Math.PI * 4);
       } else if (leakType.includes('Gasket')) {
-        // Broadband noise with some periodicity
-        amplitude = (Math.random() - 0.5) * 0.6 + Math.sin(t * Math.PI * 15) * 0.2;
+        // Slight slow drift
+        modulation = 1.0 + 0.10 * Math.sin(t * Math.PI * 1.5);
       } else if (leakType.includes('No-leak')) {
-        // Low amplitude, smooth signal
-        amplitude = Math.sin(t * Math.PI * 5) * 0.15 + (Math.random() - 0.5) * 0.05;
+        // Lower overall amplitude
+        modulation = 0.5;
       } else if (leakType.includes('Longitudinal')) {
-        // Sharp transients
-        amplitude = Math.sin(t * Math.PI * 25) * 0.4 +
-                   (Math.sin(t * Math.PI * 50) > 0.7 ? 0.5 : 0);
+        // Very subtle pulsing (hard to see in raw signal)
+        modulation = 1.0 + 0.12 * (Math.sin(t * Math.PI * 3) > 0.3 ? 0.3 : -0.2);
       } else {
-        // Orifice - high frequency continuous
-        amplitude = Math.sin(t * Math.PI * 80) * 0.4 + Math.sin(t * Math.PI * 20) * 0.2;
+        // Orifice - very stable
+        modulation = 1.05;
       }
 
+      amplitude = amplitude * modulation;
+
       // Scale to realistic pressure values (Pascals)
-      // Leaks: 0.01-0.5 Pa, No-leak: 0.001-0.01 Pa
       const scaleFactor = leakType.includes('No-leak') ? 0.01 : 0.2;
-      const scaledAmplitude = (amplitude + (Math.random() - 0.5) * 0.1) * scaleFactor;
+      const scaledAmplitude = amplitude * scaleFactor;
 
       data.push({
         time: (t * 2).toFixed(3),
@@ -530,7 +545,8 @@ const Demo = () => {
                   Step 1: Raw Acoustic Signal (Time Domain)
                 </h3>
                 <p className="step-description">
-                  Hydrophone sensor captures acoustic signals from water pipes at 8000 Hz sampling rate
+                  Hydrophone sensor captures acoustic signals from water pipes at 8000 Hz sampling rate.
+                  All leak types produce complex broadband turbulent noise - very difficult to distinguish by eye in time domain.
                 </p>
                 <ResponsiveContainer width="100%" height={250}>
                   <LineChart data={rawWaveform}>
